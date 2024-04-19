@@ -1,0 +1,45 @@
+import pandas as pd
+
+def generate_entries(input_excel, sheetA_name, output_excel, sheetD_name):
+    try:
+        # Read data from Sheet A
+        df_sheetA = pd.read_excel(input_excel, sheet_name=sheetA_name)
+
+        # Create a list to store the generated entries
+        generated_entries = []
+
+        # Iterate over rows in Sheet A
+        for index, row in df_sheetA.iterrows():
+            instrument_id = row['InstrumentID']
+
+            # Generate an entry for each Instrument ID
+            entry = {
+                'spotId': instrument_id,
+                'parameterId': 'productId',
+                'parameterValue': f'{instrument_id}##bloomberg-stream',
+                'isProductIdentifier': True,
+                'isComputedValue': False
+            }
+            generated_entries.append(entry)
+
+        # Create a DataFrame from the generated entries
+        df_generated = pd.DataFrame(generated_entries)
+
+        # Write the generated entries to Sheet D in the output Excel file, replacing the existing sheet
+        with pd.ExcelWriter(output_excel, mode='a', if_sheet_exists='replace') as writer:
+            df_generated.to_excel(writer, sheet_name=sheetD_name, index=False)
+
+        # Print confirmation message
+        print("Job completed successfully.")
+
+    except Exception as e:
+        # Print error message if an exception occurs
+        print(f"An error occurred: {e}")
+
+if __name__ == "__main__":
+    input_excel = 'C:\\Users\\ranlev\\Desktop\\Book2.xlsx'  # Path to the input Excel file
+    sheetA_name = 'SheetA'  # Name of Sheet A
+    output_excel = 'C:\\Users\\ranlev\\Desktop\\Book2.xlsx'  # Path to the output Excel file
+    sheetD_name = 'SheetD'  # Name of Sheet D
+
+    generate_entries(input_excel, sheetA_name, output_excel, sheetD_name)

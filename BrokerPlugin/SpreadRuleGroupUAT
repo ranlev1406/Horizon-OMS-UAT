@@ -1,0 +1,96 @@
+import pandas as pd
+import json
+import requests
+import urllib.parse
+
+class YourClassName:  # Update YourClassName to the name of your class if applicable
+
+    def __init__(self, url):
+        self._session = requests.Session()
+        self._url = url
+
+    def login(self, username, password):
+        data = urllib.parse.urlencode({'login': username, 'password': password})
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        with self._session.post(self._url + '/api/session/login', data=data, headers=headers) as r:
+            if r.status_code == 403:
+                raise LoginError(r.text)
+            self.check_http_errors(r)
+
+    def post_message(self, url, message):
+        response = self._session.post(url, json=message)
+        return response
+
+    def check_http_errors(self, response):
+        if response.status_code != 200:
+            raise Exception(f"HTTP Error: {response.status_code}. Reason: {response.text}")
+
+    def main(self, excel_file):
+        # Read data from Excel
+        df = pd.read_excel(excel_file, sheet_name='SpreadRuleGroup')
+
+        # Print the first few rows of the DataFrame
+        print(df.head())
+
+        # Assuming your API endpoint URL
+        api_url = self._url + '/api/db/table/SpreadRuleGroup'
+
+        # Assuming your username and password for authentication
+        username = 'automation1_UAT'
+        password = 'qegQBqwXAa_1'
+
+        # Login to get a session
+        self.login(username, password)
+
+        # Iterate through each row in the dataframe
+        for index, row in df.iterrows():
+            # Initialize records list for each row
+            records = []
+
+            # Construct message based on row values
+            message = {
+                "spreadRuleGroupId": str(row["spreadRuleGroupId"]),
+                "cautiousLevel": int(row['cautiousLevel']),
+                "distribution": str(row["distribution"]) if pd.notna(row['distribution']) else "",
+                "spreadDistribution": float(row['spreadDistribution']) if pd.notna(row['spreadDistribution']) else "",
+                "spreadInPriceAbs": float(row['spreadInPriceAbs']) if pd.notna(row['spreadInPriceAbs']) else "",
+                "spreadInPricePct": float(row['spreadInPricePct']) if pd.notna(row['spreadInPricePct']) else "",
+                "spreadInVolAbs": float(row['spreadInVolAbs']) if pd.notna(row['spreadInVolAbs']) else "",
+                "spreadInVolPct": float(row['spreadInVolPct']) if pd.notna(row['spreadInVolPct']) else "",
+                "spreadInTick": float(row['spreadInTick']) if pd.notna(row['spreadInTick']) else "",
+                "associationMode": str(row["associationMode"])if pd.notna(row['associationMode']) else "",
+                "wideDistribution": str(row["wideDistribution"])if pd.notna(row['wideDistribution']) else "",
+                "wideSpreadDistribution": float(row['wideSpreadDistribution']) if pd.notna(row['wideSpreadDistribution']) else "",
+                "wideSpreadInPriceAbs": float(row['wideSpreadInPriceAbs']) if pd.notna(row['wideSpreadInPriceAbs']) else "",
+                "wideSpreadInPricePct": float(row['wideSpreadInPricePct']) if pd.notna(row['wideSpreadInPricePct']) else "",
+                "wideSpreadInVolAbs": float(row['wideSpreadInVolAbs']) if pd.notna(row['wideSpreadInVolAbs']) else "",
+                "wideSpreadInVolPct": float(row['wideSpreadInVolPct']) if pd.notna(row['wideSpreadInVolPct']) else "",
+                "wideSpreadInTick": float(row['wideSpreadInTick']) if pd.notna(row['wideSpreadInTick']) else "",
+                "wideAssociationMode": str(row["wideAssociationMode"]) if pd.notna(row['wideAssociationMode']) else "",
+                "wideLevelledSpreadGroup": str(row["wideLevelledSpreadGroup"]) if pd.notna(row['wideLevelledSpreadGroup']) else "",
+                "levelledSpreadGroup": str(row["levelledSpreadGroup"]) if pd.notna(row['levelledSpreadGroup']) else "",
+                "spreadInRho": float(row['spreadInRho']) if pd.notna(row['spreadInRho']) else "",
+                "wideSpreadInRho": float(row['wideSpreadInRho']) if pd.notna(row['wideSpreadInRho']) else ""
+            }
+
+            records.append(message)
+
+            # Print message before sending
+            print("Message to be sent:", json.dumps({"records": records}))
+
+            # Construct the final message
+            final_message = {"records": records}
+
+            # Post the message
+            response = self.post_message(api_url, final_message)
+
+            # Print the response
+            if response.status_code == 200:
+                print("Message successfully posted.")
+            else:
+                print("Error:", response.text)
+
+if __name__ == "__main__":
+    url = 'http://10.82.4.24:8080'  # Update the URL as needed
+    excel_file_path = r'C:\Users\ranlev\Documents\1000NamesUpload.xlsx'  # Update the file path as needed
+    YourClassName(url).main(excel_file_path)

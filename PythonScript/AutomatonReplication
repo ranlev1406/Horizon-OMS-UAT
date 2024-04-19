@@ -1,0 +1,77 @@
+import pandas as pd
+
+def generate_entries(input_excel, sheetA_name, output_excel, sheetH_name):
+    try:
+        # Read data from Sheet A
+        df_sheetA = pd.read_excel(input_excel, sheet_name=sheetA_name)
+
+        # Create a list to store the generated entries
+        generated_entries = []
+
+        # Iterate over rows in Sheet A
+        for index, row in df_sheetA.iterrows():
+            instrument_id = row['InstrumentID']
+
+            # Generate an entry for each Instrument ID
+            entry = {
+                'imsId': 'INTERNAL-MARKET',
+                'productId': instrument_id,
+                'context': 'DEFAULT',
+                'spreadName': 'REFERENCE',
+                'cautiousLevel': 0,
+                'dynamicRuleGroupId': 'MarketMakingSize',
+                'askLegs': 1,
+                'bidLegs': 1,
+                'activateCapByMarket': False,
+                'activateVolumeSpread': False,
+                'scenarioType': 'FIXED_PRICE',
+                'maxDayBuy': 0,
+                'maxDaySell': 0,
+                'properties': 'nakRetryDelay=500 Stocks= depth.askTickOffsets=0 leverage.maxLeverage=0.0 polisher.stopOnFirstLimit=never fullQtyOnPriceChange=false marketLimitTickOffset=20 askSizeLevels=0 allowTheoOutsideSpread=true depth.bidTickOffsets=0 autoResumeQuotingAfterError=true portfolio=CFD-IM shareAntiSelfMatch=true bidSizeLevels=0 forceIgnoreInventory=true refillPeriodError=0.0 fullQtyOnStart=false',
+                'isActive': False,
+                'ignoreBidInventory': False,
+                'nakMaxRetries': 0,
+                'toHedge': True,
+                'useQuotes': False,
+                'quotingCurrency': '',
+                'isDynamicRuleGroupOverriden': False,
+                'marketProductId': instrument_id,
+                'baseBidSize': 0,
+                'baseAskSize': 0,
+                'baseRefillStep': 0,
+                'baseRefillPeriodMs': 0,
+                'allowSingleSideQuotes': True,
+                'baseRfqPriceTolerance': 0,
+                'baseRfqPriceToleranceType': 'IN_ABSOLUTE',
+                'baseFirstBidSize': 0,
+                'baseFirstAskSize': 0,
+                'quantityMode': 'FIXED',
+                'minBaseBidSize': 0,
+                'minBaseAskSize': 0,
+                'qtyRandomizeDelayMs': 0,
+                'choicePriceField': 0,
+                'shortId': True
+            }
+            generated_entries.append(entry)
+
+        # Create a DataFrame from the generated entries
+        df_generated = pd.DataFrame(generated_entries)
+
+        # Write the generated entries to Sheet H in the output Excel file, replacing the existing sheet
+        with pd.ExcelWriter(output_excel, mode='a', if_sheet_exists='replace') as writer:
+            df_generated.to_excel(writer, sheet_name=sheetH_name, index=False)
+
+        # Print confirmation message
+        print("Job completed successfully.")
+
+    except Exception as e:
+        # Print error message if an exception occurs
+        print(f"An error occurred: {e}")
+
+if __name__ == "__main__":
+    input_excel = 'C:\\Users\\ranlev\\Desktop\\Book2.xlsx'  # Path to the input Excel file
+    sheetA_name = 'SheetA'  # Name of Sheet A
+    output_excel = 'C:\\Users\\ranlev\\Desktop\\Book2.xlsx'  # Path to the output Excel file
+    sheetH_name = 'SheetH'  # Name of Sheet H
+
+    generate_entries(input_excel, sheetA_name, output_excel, sheetH_name)

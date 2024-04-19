@@ -1,0 +1,87 @@
+import pandas as pd
+import json
+import requests
+import urllib.parse
+
+class YourClassName:  
+
+    def __init__(self, url):
+        self._session = requests.Session()
+        self._url = url
+
+    def login(self, username, password):
+        data = urllib.parse.urlencode({'login': username, 'password': password})
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        with self._session.post(self._url + '/api/session/login', data=data, headers=headers) as r:
+            if r.status_code == 403:
+                raise LoginError(r.text)
+            self.check_http_errors(r)
+
+    def post_message(self, url, message):
+        response = self._session.post(url, json=message)
+        return response
+
+    def check_http_errors(self, response):
+        if response.status_code != 200:
+            raise Exception(f"HTTP Error: {response.status_code}. Reason: {response.text}")
+
+    def main(self, excel_file):
+        df = pd.read_excel(excel_file, sheet_name='PricingStream')
+        username = 'automation1_UAT'
+        password = 'qegQBqwXAa_1'
+        self.login(username, password)
+
+        api_url = self._url + '/api/db/table/PricingStream'
+
+        for index, row in df.iterrows():
+            message = {
+                "records": [{
+                    "productId": str(row["productId"]),
+                    "context": str(row["context"]),
+                    "spotId": str(row["spotId"]) if pd.notna(row['spotId']) else "",
+                    "priceVectorId": str(row["priceVectorId"]) if pd.notna(row['priceVectorId']) else "",
+                    "spreadRuleGroupId": str(row["spreadRuleGroupId"]) if pd.notna(row['spreadRuleGroupId']) else "",
+                    "cautiousLevel": int(row["cautiousLevel"]) if pd.notna(row['cautiousLevel']) else "",
+                    "isActive": bool(row["isActive"]) if pd.notna(row['isActive']) else "",
+                    "maxShiftValue": float(row["maxShiftValue"]) if pd.notna(row['maxShiftValue']) else "",
+                    "maxShiftType": str(row["maxShiftType"]) if pd.notna(row['maxShiftType']) else "",
+                    "isSpreadRuleGroupOverriden": bool(row["isSpreadRuleGroupOverriden"]) if pd.notna(row['isSpreadRuleGroupOverriden']) else "",
+                    "tradingVersion": str(row["tradingVersion"]) if pd.notna(row['tradingVersion']) else "",
+                    "validationVersion": str(row["validationVersion"]) if pd.notna(row['validationVersion']) else "",
+                    "volMaxShiftValue": float(row["volMaxShiftValue"]) if pd.notna(row['volMaxShiftValue']) else "",
+                    "volMaxShiftType": str(row["volMaxShiftType"]) if pd.notna(row['volMaxShiftType']) else "",
+                    "spreadCurrency": str(row["spreadCurrency"]) if pd.notna(row['spreadCurrency']) else "",
+                    "roundingTickThreshold": float(row["roundingTickThreshold"]) if pd.notna(row['roundingTickThreshold']) else "",
+                    "minTheo": float(row["minTheo"]) if pd.notna(row['minTheo']) else "",
+                    "minBidPrice": float(row["minBidPrice"]) if pd.notna(row['minBidPrice']) else "",
+                    "minAskPrice": float(row["minAskPrice"]) if pd.notna(row['minAskPrice']) else "",
+                    "pricingSource": str(row["pricingSource"]) if pd.notna(row['pricingSource']) else "",
+                    "spreadType": str(row["spreadType"]) if pd.notna(row['spreadType']) else "",
+                    "shiftSource": str(row["shiftSource"]) if pd.notna(row['shiftSource']) else "",
+                    "isShiftCappedByMMRule": bool(row["isShiftCappedByMMRule"]) if pd.notna(row['isShiftCappedByMMRule']) else "",
+                    "usedFixedVol": bool(row["usedFixedVol"]) if pd.notna(row['usedFixedVol']) else "",
+                    "fixedVolValue": float(row["fixedVolValue"]) if pd.notna(row['fixedVolValue']) else "",
+                    "priceFieldName": str(row["priceFieldName"]) if pd.notna(row['priceFieldName']) else "",
+                    "askFieldName": str(row["askFieldName"]) if pd.notna(row['askFieldName']) else "",
+                    "bidFieldName": str(row["bidFieldName"]) if pd.notna(row['bidFieldName']) else "",
+                    "initialPvSpot": float(row["initialPvSpot"]) if pd.notna(row['initialPvSpot']) else "",
+                    "isExternal": bool(row["isExternal"]) if pd.notna(row['isExternal']) else "",
+                    "externalPublicationType": str(row["externalPublicationType"]) if pd.notna(row['externalPublicationType']) else "",
+                    "allowSingleSide": bool(row["allowSingleSide"]) if pd.notna(row['allowSingleSide']) else "",
+                    "forceMarketSpread": bool(row["forceMarketSpread"]) if pd.notna(row['forceMarketSpread']) else ""
+                }]
+            }
+
+            print("Message to be sent:", json.dumps(message))
+
+            response = self.post_message(api_url, message)
+
+            if response.status_code == 200:
+                print("Message successfully posted.")
+            else:
+                print("Error:", response.text)
+
+if __name__ == "__main__":
+    url = 'http://10.82.4.24:8080'  # Update the URL as needed
+    excel_file_path = r'C:\Users\ranlev\Documents\1000NamesUpload.xlsx' # Update the file path as needed
+    YourClassName(url).main(excel_file_path)

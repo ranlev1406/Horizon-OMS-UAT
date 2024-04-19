@@ -1,0 +1,34 @@
+import pandas as pd
+
+def populate_display_name_and_ccy(excel_file, sheet1_name, sheet2_name):
+    try:
+        # Read Excel sheets into DataFrames
+        df1 = pd.read_excel(excel_file, sheet_name=sheet1_name)
+        df2 = pd.read_excel(excel_file, sheet_name=sheet2_name)
+
+        # Merge DataFrames based on matching values in InstrumentID column
+        merged_df = pd.merge(df1, df2, on='InstrumentID', how='left', suffixes=('', '_Sheet2'))
+
+        # Update InstrumentDisplayName in sheet1 with values from sheet2 where InstrumentID matches
+        merged_df['InstrumentDisplayName'] = 'CFD_' + merged_df['InstrumentDisplayName_Sheet2']
+
+        # Update CCY in sheet1 with values from sheet2 where InstrumentID matches
+        merged_df['CCY'] = merged_df['CCY_Sheet2']
+
+        # Drop unnecessary columns from sheet2
+        merged_df.drop(['InstrumentID_Sheet2', 'InstrumentDisplayName_Sheet2', 'CCY_Sheet2'], axis=1, errors='ignore', inplace=True)
+
+        # Write the updated DataFrame back to the first sheet
+        with pd.ExcelWriter(excel_file, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+            merged_df.to_excel(writer, sheet_name=sheet1_name, index=False)
+
+        print("Job was successful.")
+    except Exception as e:
+        print("An error occurred:", e)
+
+if __name__ == "__main__":
+    excel_file = 'C:\\Users\\ranlev\\Desktop\\Book2.xlsx'  # Update with your Excel file path
+    sheet1_name = 'SheetA'  # Update with the name of the first sheet
+    sheet2_name = 'SheetB'  # Update with the name of the second sheet
+
+    populate_display_name_and_ccy(excel_file, sheet1_name, sheet2_name)

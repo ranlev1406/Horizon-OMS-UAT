@@ -1,0 +1,57 @@
+import pandas as pd
+import json
+import requests
+import urllib.parse
+
+class YourClassName:  
+
+    def __init__(self, url):
+        self._session = requests.Session()
+        self._url = url
+
+    def login(self, username, password):
+        data = urllib.parse.urlencode({'login': username, 'password': password})
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        with self._session.post(self._url + '/api/session/login', data=data, headers=headers) as r:
+            if r.status_code == 403:
+                raise LoginError(r.text)
+            self.check_http_errors(r)
+
+    def post_message(self, url, message):
+        response = self._session.post(url, json=message)
+        return response
+
+    def check_http_errors(self, response):
+        if response.status_code != 200:
+            raise Exception(f"HTTP Error: {response.status_code}. Reason: {response.text}")
+
+    def main(self, excel_file):
+        df = pd.read_excel(excel_file, sheet_name='SpotUnitAddress')
+        username = 'automation1_UAT'
+        password = 'qegQBqwXAa_1'
+        self.login(username, password)
+
+        api_url = self._url + '/api/db/table/SpotUnitAddress'
+
+        for index, row in df.iterrows():
+            message = {
+                "records": [{
+                    "spotId": str(row["spotId"]),
+                    "unitId": str(row["unitId"]) if pd.notna(row['unitId']) else "",
+                }]
+            }
+
+
+            print("Message to be sent:", json.dumps(message))
+
+            response = self.post_message(api_url, message)
+
+            if response.status_code == 200:
+                print("Message successfully posted.")
+            else:
+                print("Error:", response.text)
+
+if __name__ == "__main__":
+    url = 'http://10.82.4.24:8080'  # Update the URL as needed
+    excel_file_path = r'C:\Users\ranlev\Documents\1000NamesUpload.xlsx'  # Update the file path as needed
+    YourClassName(url).main(excel_file_path)

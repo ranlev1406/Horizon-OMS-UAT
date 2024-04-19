@@ -1,0 +1,39 @@
+import re
+import os
+
+# Specify the file paths for reading and writing
+input_file_path = r'C:\Users\ranlev\Documents\Horizon OMS\Rest API\Script\GapsAlert.txt'
+output_file_path = r'C:\Users\ranlev\Documents\Horizon OMS\Rest API\Script\InstrumentsToBeDeleted.txt'
+
+try:
+    # Read the content of the input file
+    with open(input_file_path, 'r') as file:
+        content = file.read()
+
+    # Define a regular expression pattern to match the "id" field
+    pattern = r'"id":"(\d+)"'
+
+    # Use the findall function to extract all occurrences of the pattern in the content
+    matches = re.findall(pattern, content)
+
+    # Filter IDs that are 4 numbers and above
+    filtered_ids = [id for id in matches if len(id) >= 4]
+
+    # Write filtered IDs to the output file (overwriting any existing content)
+    with open(output_file_path, 'w') as output_file:
+        for id in filtered_ids:
+            output_file.write(id + '\n')
+
+    # Output filtered IDs to the terminal
+    print("Filtered IDs (4 numbers and above) have been written to 'InstrumentsToBeDeleted.txt'.\n")
+
+    # Output all IDs to the terminal
+    print("All IDs:")
+    for id in matches:
+        print("ID:", id)
+
+except FileNotFoundError:
+    print("Error: Input file not found.")
+
+except Exception as e:
+    print(f"An error occurred: {str(e)}")

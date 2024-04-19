@@ -1,0 +1,36 @@
+import requests
+
+def main():
+    # API endpoint URL
+    url = 'http://10.82.4.24:8080/api/automan/destroy'
+
+    # User credentials
+    username = 'automation1_UAT'
+    password = 'qegQBqwXAa_1'
+
+    # Fields to be posted
+    payload = {
+        'productId': '1200',  # Example eToroInstrumentID
+        'contextName': 'DEFAULT',
+        'spreadName': 'REFERENCE',
+        'Imsid': 'INTERNAL-MARKET'
+    }
+
+    # Perform login
+    session = requests.Session()
+    login_data = {'username': username, 'password': password}
+    login_response = session.post('http://10.82.4.24:8080/login', data=login_data)
+
+    if login_response.status_code == 200:
+        # Logged in successfully, now post the fields
+        post_response = session.post(url, data=payload)
+        
+        if post_response.status_code == 200:
+            print("Fields posted successfully.")
+        else:
+            print("Failed to post fields. Status code:", post_response.status_code)
+    else:
+        print("Login failed. Status code:", login_response.status_code)
+
+if __name__ == "__main__":
+    main()

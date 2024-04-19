@@ -1,0 +1,91 @@
+import pandas as pd
+import json
+import requests
+import urllib.parse
+
+class YourClassName:  
+
+    def __init__(self, url):
+        self._session = requests.Session()
+        self._url = url
+
+    def login(self, username, password):
+        data = urllib.parse.urlencode({'login': username, 'password': password})
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        with self._session.post(self._url + '/api/session/login', data=data, headers=headers) as r:
+            if r.status_code == 403:
+                raise LoginError(r.text)
+            self.check_http_errors(r)
+
+    def post_message(self, url, message):
+        response = self._session.post(url, json=message)
+        return response
+
+    def check_http_errors(self, response):
+        if response.status_code != 200:
+            raise Exception(f"HTTP Error: {response.status_code}. Reason: {response.text}")
+
+    def main(self, excel_file):
+        df = pd.read_excel(excel_file, sheet_name='Automaton')
+        username = 'automation1_UAT'
+        password = 'qegQBqwXAa_1'
+        self.login(username, password)
+
+        api_url = self._url + '/api/db/table/Automaton'
+
+        for index, row in df.iterrows():
+            message = {
+                "records": [{
+                    "imsId": str(row["imsId"]),
+                    "productId": str(row["productId"]),
+                    "context": str(row["context"]),
+                    "spreadName": str(row["spreadName"]),
+                    "cautiousLevel": int(row["cautiousLevel"]) if pd.notna(row['cautiousLevel']) else None,
+                    "dynamicRuleGroupId": str(row["dynamicRuleGroupId"]) if pd.notna(row['dynamicRuleGroupId']) else "",
+                    "askLegs": int(row["askLegs"]) if pd.notna(row['askLegs']) else None,
+                    "bidLegs": int(row["bidLegs"]) if pd.notna(row['bidLegs']) else None,
+                    "activateCapByMarket": bool(row["activateCapByMarket"]) if pd.notna(row['activateCapByMarket']) else None,
+                    "activateVolumeSpread": bool(row["activateVolumeSpread"]) if pd.notna(row['activateVolumeSpread']) else None,
+                    "scenarioType": str(row["scenarioType"]) if pd.notna(row['scenarioType']) else "",
+                    "maxDayBuy": int(row["maxDayBuy"]) if pd.notna(row['maxDayBuy']) else None,
+                    "maxDaySell": int(row["maxDaySell"]) if pd.notna(row['maxDaySell']) else None,
+                    "properties": str(row["properties"]) if pd.notna(row['properties']) else "",
+                    "isActive": bool(row["isActive"]) if pd.notna(row['isActive']) else None,
+                    "ignoreBidInventory": bool(row["ignoreBidInventory"]) if pd.notna(row['ignoreBidInventory']) else None,
+                    "nakMaxRetries": int(row["nakMaxRetries"]) if pd.notna(row['nakMaxRetries']) else None,
+                    "toHedge": bool(row["toHedge"]) if pd.notna(row['toHedge']) else None,
+                    "useQuotes": bool(row["useQuotes"]) if pd.notna(row['useQuotes']) else None,
+                    "quotingCurrency": str(row["quotingCurrency"]) if pd.notna(row['quotingCurrency']) else "",
+                    "isDynamicRuleGroupOverriden": bool(row["isDynamicRuleGroupOverriden"]) if pd.notna(row['isDynamicRuleGroupOverriden']) else None,
+                    "marketProductId": str(row["marketProductId"]) if pd.notna(row['marketProductId']) else "",
+                    "baseBidSize": int(row["baseBidSize"]) if pd.notna(row['baseBidSize']) else None,
+                    "baseAskSize": int(row["baseAskSize"]) if pd.notna(row['baseAskSize']) else None,
+                    "baseRefillStep": int(row["baseRefillStep"]) if pd.notna(row['baseRefillStep']) else None,
+                    "baseRefillPeriodMs": int(row["baseRefillPeriodMs"]) if pd.notna(row['baseRefillPeriodMs']) else None,
+                    "allowSingleSideQuotes": bool(row["allowSingleSideQuotes"]) if pd.notna(row['allowSingleSideQuotes']) else None,
+                    "baseRfqPriceTolerance": float(row["baseRfqPriceTolerance"]) if pd.notna(row['baseRfqPriceTolerance']) else None,
+                    "baseRfqPriceToleranceType": str(row["baseRfqPriceToleranceType"]) if pd.notna(row['baseRfqPriceToleranceType']) else "",
+                    "baseFirstBidSize": int(row["baseFirstBidSize"]) if pd.notna(row['baseFirstBidSize']) else None,
+                    "baseFirstAskSize": int(row["baseFirstAskSize"]) if pd.notna(row['baseFirstAskSize']) else None,
+                    "quantityMode": str(row["quantityMode"]) if pd.notna(row['quantityMode']) else "",
+                    "minBaseBidSize": float(row["minBaseBidSize"]) if pd.notna(row['minBaseBidSize']) else None,
+                    "minBaseAskSize": float(row["minBaseAskSize"]) if pd.notna(row['minBaseAskSize']) else None,
+                    "qtyRandomizeDelayMs": int(row["qtyRandomizeDelayMs"]) if pd.notna(row['qtyRandomizeDelayMs']) else None,
+                    "choicePriceField": str(row["choicePriceField"]) if pd.notna(row['choicePriceField']) else "",
+                    "shortId": str(row["shortId"]) if pd.notna(row['shortId']) else "",
+                }]
+            }
+
+            print("Message to be sent:", json.dumps(message))
+
+            response = self.post_message(api_url, message)
+
+            if response.status_code == 200:
+                print("Message successfully posted.")
+            else:
+                print("Error:", response.text)
+
+if __name__ == "__main__":
+    url = 'http://10.82.4.24:8080'  # Update the URL as needed
+    excel_file_path = r'C:\Users\ranlev\Documents\1000NamesUpload.xlsx'  # Update the file path as needed
+    YourClassName(url).main(excel_file_path)
