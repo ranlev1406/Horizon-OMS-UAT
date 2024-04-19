@@ -92,5 +92,5 @@ class YourClassName:  # Update YourClassName to the name of your class if applic
 
 if __name__ == "__main__":
     url = 'http://10.82.4.24:8080'  # Update the URL as needed
-    excel_file_path = r'C:\Users\ranlev\Documents\1000NamesUpload.xlsx'  # Update the file path as needed
+    excel_file_path = r'C:\Users\ranlev\Documents\Horizon OMS UAT\Rest API\Script\1000NamesUpload.xlsx'  # Update the file path as needed
     YourClassName(url).main(excel_file_path)

@@ -29,7 +29,7 @@ class YourClassName:
         self.login('automation1_UAT', 'qegQBqwXAa_1')
         
         # Read data from the GetPositionsFrom sheet
-        df = pd.read_excel(r'C:\Users\ranlev\Documents\1000NamesUpload.xlsx', sheet_name='GetPositionsFrom')
+        df = pd.read_excel(r'C:\Users\ranlev\Documents\Horizon OMS UAT\Rest API\Script\1000NamesUpload.xlsx', sheet_name='GetPositionsFrom')
         
         # Prepare the message body
         message = {

@@ -27,7 +27,7 @@ def populate_display_name_and_ccy(excel_file, sheet1_name, sheet2_name):
         print("An error occurred:", e)
 
 if __name__ == "__main__":
-    excel_file = 'C:\\Users\\ranlev\\Desktop\\Book2.xlsx'  # Update with your Excel file path
+    excel_file = 'C:\\Users\\ranlev\\Documents\\Horizon OMS UAT\\Rest API\\Script\\Book2.xlsx'  # Update with your Excel file path
     sheet1_name = 'SheetA'  # Update with the name of the first sheet
     sheet2_name = 'SheetB'  # Update with the name of the second sheet
 

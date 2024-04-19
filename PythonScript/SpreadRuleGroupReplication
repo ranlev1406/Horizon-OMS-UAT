@@ -56,9 +56,9 @@ def generate_entries(input_excel, sheetA_name, output_excel, sheetC_name):
         print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
-    input_excel = 'C:\\Users\\ranlev\\Desktop\\Book2.xlsx'  # Path to the input Excel file
+    input_excel = 'C:\\Users\\ranlev\\Documents\\Horizon OMS UAT\\Rest API\\Script\\Book2.xlsx'  # Path to the input Excel file
     sheetA_name = 'SheetA'  # Name of Sheet A
-    output_excel = 'C:\\Users\\ranlev\\Desktop\\Book2.xlsx'  # Path to the output Excel file
+    output_excel = 'C:\\Users\\ranlev\\Documents\\Horizon OMS UAT\\Rest API\\Script\\Book2.xlsx'  # Path to the output Excel file
     sheetC_name = 'SheetC'  # Name of Sheet C
 
     generate_entries(input_excel, sheetA_name, output_excel, sheetC_name)
