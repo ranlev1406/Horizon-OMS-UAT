@@ -1,0 +1,50 @@
+import pandas as pd
+from openpyxl import load_workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
+
+def copy_data(excel_file, sheet_I_name, sheet_J_name):
+    # Read data from SheetJ
+    sheet_J_df = pd.read_excel(excel_file, sheet_name=sheet_J_name)
+
+    # Check for missing values in InstrumentID column
+    if sheet_J_df['InstrumentID'].isna().any():
+        print("Warning: Missing values found in InstrumentID column in SheetJ.")
+        return
+
+    # Open the Excel file
+    wb = load_workbook(excel_file)
+
+    # Get the sheet I
+    sheet_I = wb[sheet_I_name]
+
+    # Read data from SheetI into a DataFrame
+    data = sheet_I.values
+    cols = next(data)
+    sheet_I_df = pd.DataFrame(data, columns=cols)
+
+    # Merge data based on matching Instrument IDs
+    merged_df = pd.merge(sheet_I_df, sheet_J_df, how='inner', on='InstrumentID')
+
+    # Check if merged_df is empty
+    if not merged_df.empty:
+        # Print merged DataFrame for inspection
+        print("Merged DataFrame:")
+        print(merged_df)
+
+        # Replace non-missing values in SheetI with corresponding values from SheetJ
+        for idx, row in merged_df.iterrows():
+            for col_idx, col_name in enumerate(['mic', 'name', 'currencyId']):
+                sheet_I.cell(row=idx+2, column=cols.index(col_name) + 1).value = row[f'{col_name}_y']
+
+        # Save the changes to the Excel file
+        wb.save(excel_file)
+        print("Data copied successfully.")
+    else:
+        print("No matching data found.")
+
+if __name__ == "__main__":
+    excel_file = 'C:\\Users\\ranlev\\Documents\\Horizon OMS UAT\\Rest API\\Script\\Book2.xlsx'  # Update with your Excel file path
+    sheet_I_name = 'SheetI'  # Update with the name of SheetI
+    sheet_J_name = 'SheetJ'  # Update with the name of SheetJ
+
+    copy_data(excel_file, sheet_I_name, sheet_J_name)
