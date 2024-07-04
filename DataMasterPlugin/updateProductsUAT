@@ -1,6 +1,7 @@
 import pandas as pd
 import requests
 import json
+from math import isnan
 
 class ProductUpdater:
 
@@ -23,16 +24,16 @@ class ProductUpdater:
 
     def create_product_json(self, row):
         properties = {
-            "gs_exchangeId": row["GS Exchange ID"],
-            "saxo_exchangeId": row["Saxo Exchange ID"],
-            "saxo_symbol": row["Saxo Symbol"],
-            "gs_symbol": row["GS Symbol"],
-            "jpm_symbol": row["JPM Symbol"],
-            "apex_exchangeId": row["Apex Exchange ID"],
-            "virtu_exchangeId": row["Virtu Exchange ID"],
-            "apex_symbol": row["Apex Symbol"],
-            "jpm_exchangeId": row["JPM Exchange ID"],
-            "virtu_symbol": row["Virtu Symbol"]
+            "gs_exchangeId": self.get_value_or_nan(row, "GS Exchange ID"),
+            "saxo_exchangeId": self.get_value_or_nan(row, "Saxo Exchange ID"),
+            "saxo_symbol": self.get_value_or_nan(row, "Saxo Symbol"),
+            "gs_symbol": self.get_value_or_nan(row, "GS Symbol"),
+            "jpm_symbol": self.get_value_or_nan(row, "JPM Symbol"),
+            "apex_exchangeId": self.get_value_or_nan(row, "Apex Exchange ID"),
+            "virtu_exchangeId": self.get_value_or_nan(row, "Virtu Exchange ID"),
+            "apex_symbol": self.get_value_or_nan(row, "Apex Symbol"),
+            "jpm_exchangeId": self.get_value_or_nan(row, "JPM Exchange ID"),
+            "virtu_symbol": self.get_value_or_nan(row, "Virtu Symbol")
         }
 
         product_data = {
@@ -63,7 +64,18 @@ class ProductUpdater:
             "mic": row["MIC"]
         }
 
+        # Remove empty strings and NaN values from properties
+        product_data["properties"] = {k: v for k, v in product_data["properties"].items() if v or v == 0}
+
         return product_data
+
+    def get_value_or_nan(self, row, column):
+        value = row[column]
+        if pd.isna(value):
+            print(f"Warning: Found NaN value in column '{column}'")
+            return "NaN"  # or handle NaN as needed
+        else:
+            return value
 
     def update_products(self, input_file):
         username = 'automation1_UAT'
@@ -75,19 +87,23 @@ class ProductUpdater:
         api_url = f"{self._url}/api/hsdatamaster/insertProducts"
 
         for index, row in df.iterrows():
-            product_data = self.create_product_json(row)
-            json_data = {"products": [product_data]}
+            try:
+                product_data = self.create_product_json(row)
+                json_data = {"products": [product_data]}
 
-            print("Sending JSON data:", json.dumps(json_data))
+                print("Sending JSON data:", json.dumps(json_data))
 
-            headers = {"Content-Type": "application/json"}
-            response = self._session.post(api_url, json=json_data, headers=headers)
+                headers = {"Content-Type": "application/json"}
+                response = self._session.post(api_url, json=json_data, headers=headers)
 
-            if response.status_code == 200:
-                print(f"Product with ID {product_data['id']} successfully updated.")
-            else:
-                print(f"Failed to update product with ID {product_data['id']}. Status code: {response.status_code}")
-                print(f"Response: {response.text}")
+                if response.status_code == 200:
+                    print(f"Product with ID {product_data['id']} successfully updated.")
+                else:
+                    print(f"Failed to update product with ID {product_data['id']}. Status code: {response.status_code}")
+                    print(f"Response: {response.text}")
+
+            except Exception as e:
+                print(f"Error processing product row {index}: {str(e)}")
 
 if __name__ == "__main__":
     url = 'http://10.82.4.24:8080'  # Replace with your API base URL
