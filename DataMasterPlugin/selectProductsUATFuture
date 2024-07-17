@@ -1,0 +1,107 @@
+import pandas as pd
+import requests
+from openpyxl import Workbook
+import datetime  # Needed for converting maturity timestamps to dates
+
+class ProductRetriever:
+
+    def __init__(self, url):
+        self._session = requests.Session()
+        self._url = url
+
+    def login(self, username, password):
+        login_url = f"{self._url}/api/session/login"
+        data = {
+            'login': username,
+            'password': password
+        }
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        response = self._session.post(login_url, data=data, headers=headers)
+        if response.status_code == 403:
+            raise Exception(f"Login failed: {response.text}")
+        elif response.status_code != 200:
+            raise Exception(f"Failed to login. Status code: {response.status_code}")
+
+    def retrieve_product_info(self, product_id):
+        api_url = f"{self._url}/api/hsdatamaster/selectProducts"
+        params = {'productId': product_id}
+        print(f"Fetching data for product ID: {product_id}")  # Print the product ID being fetched
+        response = self._session.get(api_url, params=params)
+        if response.status_code == 200:
+            product_info = response.json()
+            return product_info
+        else:
+            print(f"Failed to retrieve data for product ID {product_id}. Status code: {response.status_code}")
+            return None
+
+    def write_to_excel(self, products, output_file):
+        wb = Workbook()
+        ws = wb.active
+        headers = [
+            "ID", "Name", "Unlisted", "Product Type", "Lot Size", "Lot Size Denominator",
+            "Significant Decimals", "Tick Rule ID", "Currency ID", "Exchange ID", "Description",
+            "Point Value", "Contract Size Numerator", "Contract Size Denominator", "Bloomberg Ticker",
+            "MIC", "Marex Symbol", "Marex Exchange ID", "UL ID", "Market UL ID", "Position Decomposed",
+            "Maturity", "Basis", "Quotity", "Quanto Rate", "Quanto"
+        ]
+        ws.append(headers)
+
+        for product in products:
+            if product:
+                product_data = product.get("products", [])
+                for item in product_data:
+                    maturity_date = datetime.datetime.fromtimestamp(item.get("maturity", 0) / 1000.0).date()
+                    ws.append([
+                        item.get("id", ""),
+                        item.get("name", ""),
+                        item.get("unlisted", ""),
+                        item.get("productType", ""),
+                        item.get("lotSize", ""),
+                        item.get("lotSizeD", ""),
+                        item.get("qtyNbSignificantDecimals", ""),
+                        item.get("tickRuleId", ""),
+                        item.get("currencyId", ""),
+                        item.get("exchangeId", ""),
+                        item.get("description", ""),
+                        item.get("pointValue", ""),
+                        item.get("contractSizeNumerator", ""),
+                        item.get("contractSizeDenominator", ""),
+                        item.get("addresses", {}).get("BLOOMBERG", {}).get("ticker", ""),
+                        item.get("mic", ""),
+                        item.get("properties", {}).get("marex_symbol", ""),
+                        item.get("properties", {}).get("marex_exchangeId", ""),
+                        item.get("ulId", ""),
+                        item.get("marketUlId", ""),
+                        item.get("positionDecomposed", ""),
+                        maturity_date,
+                        item.get("basis", ""),
+                        item.get("quotity", ""),
+                        item.get("quantoRate", ""),
+                        item.get("quanto", "")
+                    ])
+
+        wb.save(output_file)
+        print(f"Data written to {output_file}")
+
+    def fetch_and_save_products(self, input_file, output_file):
+        username = 'automation1_UAT'
+        password = 'qegQBqwXAa_1'
+        self.login(username, password)
+
+        df_input = pd.read_excel(input_file, sheet_name='Sheet1')
+        product_ids = df_input['Product ID'].tolist()
+
+        products = []
+        for product_id in product_ids:
+            product_info = self.retrieve_product_info(product_id)
+            products.append(product_info)
+
+        self.write_to_excel(products, output_file)
+
+if __name__ == "__main__":
+    url = 'http://10.82.4.24:8080'
+    input_excel_file = r'C:\Users\ranlev\Documents\Horizon OMS UAT\Rest API\Script\ProductIdToPull.xlsx'
+    output_excel_file = r'C:\Users\ranlev\Documents\Horizon OMS UAT\Rest API\Script\ProductIDRead.xlsx'
+
+    retriever = ProductRetriever(url)
+    retriever.fetch_and_save_products(input_excel_file, output_excel_file)

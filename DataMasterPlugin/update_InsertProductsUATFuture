@@ -1,0 +1,96 @@
+import pandas as pd
+import requests
+import json
+from datetime import datetime
+
+class ProductUpdater:
+
+    def __init__(self, url):
+        self._session = requests.Session()
+        self._url = url
+
+    def login(self, username, password):
+        login_url = f"{self._url}/api/session/login"
+        data = {
+            'login': username,
+            'password': password
+        }
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        response = self._session.post(login_url, data=data, headers=headers)
+        if response.status_code == 403:
+            raise Exception(f"Login failed: {response.text}")
+        elif response.status_code != 200:
+            raise Exception(f"Failed to login. Status code: {response.status_code}")
+
+    def create_product_json(self, row):
+        properties = {
+            "marex_symbol": self.handle_nan(row.get("Marex Symbol")),
+            "marex_exchangeId": self.handle_nan(row.get("Marex Exchange ID"))
+        }
+
+        product_data = {
+            "unlisted": row["Unlisted"],
+            "id": str(row["ID"]),
+            "name": row["Name"],
+            "properties": {k: v for k, v in properties.items() if v is not None},  # Exclude None values
+            "productType": int(row["Product Type"]),
+            "lotSize": int(row["Lot Size"]),
+            "lotSizeD": int(row["Lot Size Denominator"]),
+            "qtyNbSignificantDecimals": int(row["Significant Decimals"]),
+            "tickRuleId": row["Tick Rule ID"],
+            "currencyId": row["Currency ID"],
+            "exchangeId": row["Exchange ID"],
+            "description": row["Description"],
+            "pointValue": int(row["Point Value"]),
+            "contractSizeNumerator": int(row["Contract Size Numerator"]),
+            "contractSizeDenominator": int(row["Contract Size Denominator"]),
+            "mic": row["MIC"],
+            "maturity": row.get("Maturity").strftime('%Y-%m-%d') if pd.notnull(row.get("Maturity")) else None,
+            "ulId": row["UL ID"],
+            "marketUlId": row["Market UL ID"],
+            "positionDecomposed": row["Position Decomposed"],
+            "basis": int(row["Basis"]),
+            "quotity": int(row["Quotity"]),
+            "quantoRate": float(row["Quanto Rate"]),
+            "quanto": row["Quanto"]
+        }
+
+        return product_data
+
+    def handle_nan(self, value):
+        return None if pd.isna(value) else value
+
+    def update_products(self, input_file):
+        username = 'automation1_UAT'
+        password = 'qegQBqwXAa_1'
+        self.login(username, password)
+
+        df = pd.read_excel(input_file, sheet_name='Sheet')  # Adjust sheet name as needed
+
+        api_url = f"{self._url}/api/hsdatamaster/insertProducts"
+
+        for index, row in df.iterrows():
+            try:
+                product_data = self.create_product_json(row)
+                json_data = {"products": [product_data]}
+
+                print("Sending JSON data:", json.dumps(json_data))
+
+                headers = {"Content-Type": "application/json"}
+                response = self._session.post(api_url, json=json_data, headers=headers)
+
+                if response.status_code == 200:
+                    print(f"Product with ID {product_data['id']} successfully updated.")
+                else:
+                    print(f"Failed to update product with ID {product_data['id']}. Status code: {response.status_code}")
+                    print(f"Response: {response.text}")
+
+            except Exception as e:
+                print(f"Error processing product row {index}: {str(e)}")
+
+if __name__ == "__main__":
+    url = 'http://10.82.4.24:8080'  # Replace with your API base URL
+    input_excel_file = r'C:\Users\ranlev\Documents\Horizon OMS UAT\Rest API\Script\ProductIDRead.xlsx'  # Input Excel file path
+
+    updater = ProductUpdater(url)
+    updater.update_products(input_excel_file)

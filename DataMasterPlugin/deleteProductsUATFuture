@@ -1,0 +1,40 @@
+import requests
+import json
+
+# API endpoint details
+url = 'http://10.82.4.24:8080/api/hsdatamaster/deleteProducts'
+username = 'automation1_UAT'
+password = 'qegQBqwXAa_1'
+
+# Read IDs from a text file
+with open(r'C:\Users\ranlev\Documents\Horizon OMS\Rest API\Script\InstrumentsToBeDeleted.txt', 'r') as file:
+    ids = file.read().splitlines()
+
+# Static product information
+product_info = {
+    "productType": 5
+}
+
+# Create a POST request for each ID in the text file
+for product_id in ids:
+    payload = {
+        "products": [
+            {
+                "id": product_id,
+                **product_info
+            }
+        ]
+    }
+
+    # Set up basic authentication
+    auth = (username, password)
+
+    # Make the POST request
+    response = requests.post(url, json=payload, auth=auth)
+
+    # Check the response
+    if response.status_code == 200:
+        print(f"Product with ID {product_id} deleted successfully.")
+    else:
+        print(f"Failed to delete product with ID {product_id}. Status code: {response.status_code}")
+        print(response.text)
