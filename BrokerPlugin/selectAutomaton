@@ -1,0 +1,51 @@
+import pandas as pd
+import json
+import requests
+import urllib.parse
+
+class YourClassName:  
+
+    def __init__(self, url):
+        self._session = requests.Session()
+        self._url = url
+
+    def login(self, username, password):
+        data = urllib.parse.urlencode({'login': username, 'password': password})
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        with self._session.post(self._url + '/api/session/login', data=data, headers=headers) as r:
+            if r.status_code == 403:
+                raise LoginError(r.text)
+            self.check_http_errors(r)
+
+    def get_message(self, url, params):
+        response = self._session.get(url, params=params)
+        self.check_http_errors(response)
+        return response.json()
+
+    def check_http_errors(self, response):
+        if response.status_code != 200:
+            raise Exception(f"HTTP Error: {response.status_code}. Reason: {response.text}")
+
+    def main(self, output_excel_file):
+        username = 'automation1_UAT'
+        password = 'qegQBqwXAa_1'
+        self.login(username, password)
+
+        api_url = self._url + '/api/db/table/Automaton'
+        params = {"imsId": "INTERNAL-MARKET"}
+        
+        response_data = self.get_message(api_url, params)
+        
+        print("Response Data:", response_data)  # Debug print statement
+        
+        if response_data and "records" in response_data:
+            df = pd.DataFrame(response_data["records"])
+            df.to_excel(output_excel_file, index=False)
+            print("Data successfully saved to Excel.")
+        else:
+            print("No data found or incorrect response format.")
+
+if __name__ == "__main__":
+    url = 'http://10.82.4.24:8080'  # Update the URL as needed
+    output_excel_file_path = r'C:\Users\ranlev\Documents\Horizon OMS UAT\Rest API\Script\AutomatonData.xlsx'  # Update the file path as needed
+    YourClassName(url).main(output_excel_file_path)
